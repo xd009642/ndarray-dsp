@@ -40,8 +40,13 @@ where
         let row_fft = planner.plan_fft(shape[0]);
         let col_fft = planner.plan_fft(shape[1]);
 
-        let row_freqs = fft_rows(converted.view(), row_fft).reversed_axes();
-        fft_rows(row_freqs.view(), col_fft).reversed_axes()
+        let row_freqs = fft_rows(converted.view(), row_fft);
+        if shape[1] == 1 {
+            row_freqs
+        } else {
+            let row_freqs = row_freqs.reversed_axes();
+            fft_rows(row_freqs.view(), col_fft).reversed_axes()
+        }
     }
 }
 
