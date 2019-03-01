@@ -1,7 +1,7 @@
 use crate::{ForwardTransformExt, InverseTransformExt};
 use ndarray::{prelude::*, s};
+use num_traits::{cast::NumCast, Num, NumAssignOps};
 use rustfft::num_complex::Complex;
-use rustfft::num_traits::{cast::NumCast, Num, NumAssignOps};
 use rustfft::{FFTplanner, FFT};
 use std::sync::Arc;
 
@@ -77,7 +77,6 @@ impl InverseTransformExt for Dft<Complex<f64>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ForwardTransformExt;
     use assert_approx_eq::assert_approx_eq;
 
     fn c(real: f64, imag: f64) -> Complex<f64> {
