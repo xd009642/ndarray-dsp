@@ -100,8 +100,8 @@ where
 
         let shape = self.0.shape();
 
-        let scale =
-            T::from_f64(((shape[0] * shape[1] - 1) as f64) / 2.0).unwrap_or_else(|| T::one());
+        let scale = T::from_f64(((shape[0]*shape[1] - 1) as f64) / 2.0);
+        let scale = scale.unwrap_or_else(|| T::one());
 
         let mut planner = DCTplanner::<T>::new();
         let row_dct = planner.plan_dct2(shape[0]);
@@ -115,6 +115,7 @@ where
                 rows.slice_mut(s![i, ..]).assign(&arr1(&buffer[..shape[0]]));
             }
         }
+        result.mapv_inplace(|x| x*scale);
         for (i, col) in rows.t().outer_iter().enumerate() {
             let mut c = col.to_owned();
             if let Some(t) = c.as_slice_mut() {
@@ -148,6 +149,7 @@ where
                 rows.slice_mut(s![i, ..]).assign(&arr1(&buffer[..shape[0]]));
             }
         }
+        result.mapv_inplace(|x| x * scale);
         for (i, col) in rows.t().outer_iter().enumerate() {
             let mut c = col.to_owned();
             if let Some(t) = c.as_slice_mut() {
@@ -216,29 +218,32 @@ mod tests {
 
     #[test]
     fn test_dct_2() {
-        let expected = arr2(&[[16.0, -3.46410162, 2.0], 
-                            [3.46410162, 3.0, 1.73205081], 
-                            [2.0, -1.73205081, 7.0]]);
+        let expected = arr2(&[[16.0, 3.46410162, 2.0], 
+                            [-3.46410162, 3.0, -1.73205081], 
+                            [2.0, 1.73205081, 7.0]]);
 
         let input: Array2<f64> = arr2(&[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.0, 1.0]]);
 
         let dct = Dct(input);
 
-        let actual = dct.perform_dct1();
+        let actual = dct.perform_dct2();
         for (a, e) in actual.iter().zip(expected.iter()) {
             assert_approx_eq!(a, e);
         }
-    
     }
 
     #[test]
     fn test_dct_3() {
-        let expected = arr2(&[[5.0, -1.0, -1.0], [2.0, -1.0, 2.0], [-1.0, -1.0, 5.0]]);
-        let input = Array2::<f64>::eye(3);
+        let expected = arr2(&[[6.0, -4.4408921e-16, -4.4408921e-16], 
+                            [-3.0, 3.0, -3.0], 
+                            [-8.8817842e-16, 0.0, 6.0]]);
+        
+        let input: Array2<f64> = arr2(&[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.0, 1.0]]);
 
         let dct = Dct(input);
 
         let actual = dct.perform_dct3();
+
         for (a, e) in actual.iter().zip(expected.iter()) {
             assert_approx_eq!(a, e);
         }
