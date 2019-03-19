@@ -5,6 +5,44 @@ use rustfft::num_complex::Complex;
 use rustfft::{FFTplanner, FFT};
 use std::sync::Arc;
 
+pub trait FftShiftExt {
+    
+    fn fftshift_inplace(&mut self);
+
+    fn fftshift(&self) -> Self;
+
+}
+
+
+impl<T> FftShiftExt for Array2<T> where T:Clone + Copy {
+    
+    fn fftshift_inplace(&mut self) {
+        let rows = self.shape()[0];
+        let cols = self.shape()[1];
+        let rows_2 = ((rows as f32)/2.0).floor() as usize;
+        let cols_2 = ((cols as f32)/2.0).floor() as usize;
+        
+        let temp = self.clone();
+        for i in 0..rows {
+            let index = (i + rows_2 ) % rows;
+            self.slice_mut(s![index, ..]).assign(&temp.slice(s![i, ..]));
+        }
+        
+        let temp = self.clone();
+        for i in 0..cols {
+            let index = (i + cols_2 ) % cols;
+            self.slice_mut(s![.., index]).assign(&temp.slice(s![.., i]));
+        }
+    }
+
+    fn fftshift(&self) -> Self {
+        let mut result = self.clone();
+        result.fftshift_inplace();
+        result.to_owned()
+    }
+}
+
+
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub struct Dft<T>(Array2<T>);
 
@@ -126,5 +164,29 @@ mod tests {
             assert_approx_eq!(a.re, e.re);
             assert_approx_eq!(a.im, e.im);
         }
+    }
+
+    #[test]
+    fn fftshift_odd_dimension_test() {
+        let mut unshifty = arr2(&[[1,2,3],[4,5,6],[7,8,9]]);
+        let shifty = arr2(&[[9,7,8],[3,1,2],[6,4,5]]);
+
+        assert_eq!(shifty, unshifty.fftshift());
+
+        unshifty.fftshift_inplace();
+
+        assert_eq!(shifty, unshifty);
+    }
+
+    #[test]
+    fn fftshift_even_dimension_test() {
+        let mut unshifty = arr2(&[[1,2,3],[4,5,6],[7,8,9],[10,11,12]]);
+        let shifty = arr2(&[[9,7,8],[12,10,11],[3,1,2],[6,4,5]]);
+
+        assert_eq!(shifty, unshifty.fftshift());
+
+        unshifty.fftshift_inplace();
+
+        assert_eq!(shifty, unshifty);
     }
 }
