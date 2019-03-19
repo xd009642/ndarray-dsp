@@ -28,5 +28,5 @@ after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
     # Uncomment the following line for coveralls.io
     echo $TRAVIS_JOB_ID
-    cargo tarpaulin --coveralls $TRAVIS_JOB_ID
+    cargo tarpaulin --coveralls $TRAVIS_JOB_ID  --ciserver travis-ci
   fi
